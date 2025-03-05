@@ -1,0 +1,1243 @@
+{% load static %}
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="robots" content="noindex, follow">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css"
+        integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <style>
+          /* General Styles */
+          .small-container {
+        width: 695px;
+        /* min-height: 500px; */
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 9px;
+        padding: 10px 50px 40px;
+        position: relative;
+        display: flex;
+        /* height: 100%; */
+        align-items: center;
+    }
+    
+    .position-fixed {
+        position: absolute;
+        top: 45%;
+        padding-top: 150px;
+        background: white;
+        padding-bottom: 30px;
+        z-index: 99;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0 auto;
+        text-align: center;
+        width:452px;
+    /* padding-top: -16px; */
+    /* margin-top: 81px; */
+    }
+    
+    /* Input Styles */
+    input::-webkit-calendar-picker-indicator {
+        display: none !important;
+    }
+    
+    .form-group input,
+    .form-group-1 input {
+        width: 100%;
+        border: 0;
+        padding: 14px 12px;
+        font-size: 14px;
+        font-family: Colfax;
+        font-weight: 600;
+        color: #64748b;
+        outline: none;
+        background: #fafbfc;
+        border-radius: 4px;
+    }
+    
+    /* Select Styles */
+    .form-group select {
+        width: 100%;
+        border: 0;
+        padding: 14px 12px;
+        font-size: 14px;
+        font-family: Colfax;
+        font-weight: 600;
+        color: #64748b;
+        outline: none;
+        background: #fafbfc;
+        border-radius: 4px;
+        position: relative;
+    }
+    
+    .form-group select option {
+        margin-top: 400px;
+        background-color: red;
+    }
+    
+    .select-option {
+        width: 600px;
+        margin-top: 20px;
+    }
+    
+    /* Table Styles */
+    .table-section {
+        /* background: #fafbfc; */
+        border-radius: 15px;
+        padding: 14px 12px;
+        max-height: auto;
+        width: 85%;
+        position: absolute;
+        top: 420%;
+        left: 128px;
+
+    }
+    
+    .table {
+        width: 100%;
+    }
+    
+    th {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 600;
+    padding: 10px 5px;
+    margin-left: -10px;
+    text-align:start;
+    padding-left: 30px;
+}
+
+td {
+    margin: 4px;
+    /* padding: 8px; */
+    text-align:start;
+    padding-left: 15px;
+}
+
+.table-data-row:nth-child(odd) {
+    background: #fafbfc;
+}
+    
+    /* Button Styles */
+    .mybtn2 {
+        border: none;
+        background-color: transparent;
+        cursor: pointer;
+    }
+    
+    button {
+        background-color: #04aa6d;
+        color: white;
+        padding: 14px 20px;
+        margin: 8px 0;
+        border: none;
+        cursor: pointer;
+        width: 50%;
+        opacity: 0.9;
+    }
+    
+    button:hover {
+        opacity: 1;
+    }
+    
+    .cancelbtn,
+    .deletebtn {
+        float: left;
+        width: 50%;
+    }
+    
+    .cancelbtn {
+        background-color: #ccc;
+        color: black;
+    }
+    
+    .deletebtn {
+        background-color: #f44336;
+    }
+    
+    /* Modal Styles */
+    .container {
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 35%;
+        height: 50%;
+        padding-top: 100px;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto 15% auto;
+        border: 1px solid #888;
+        width: 80%;
+    }
+    
+    hr {
+        border: 1px solid #f1f1f1;
+        margin-bottom: 25px;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: #f44336;
+        cursor: pointer;
+    }
+    
+    .clearfix::after {
+        content: "";
+        clear: both;
+        display: table;
+    }
+    .popup-message {
+    display: none;
+    position: fixed;
+    top: 10px; /* Position 10px from the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #FFCF00; /* Green background color */
+    color: white; /* White text color */
+    padding: 10px 20px; /* Padding */
+    border-radius: 4px; /* Rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Box shadow */
+    z-index: 1000; /* Ensure it is above other elements */
+    font-family: Colfax;
+    font-weight: 600;
+}
+    
+    /* Responsive Styles */
+    @media only screen and (max-width: 764px) {
+        .small-container {
+            width: 97%;
+            height: 100%;
+            top: 5%;
+            position: relative;
+            padding: 10px 15px 40px !important;
+        }
+        
+    
+    
+
+.table-data-row:nth-child(odd) {
+    background: #fafbfc;
+}
+    
+        .table-section {
+            border-radius: 15px;
+        padding: 14px 12px;
+        max-height: auto;
+        width: 85%;
+        position: absolute;
+        top: 21%;
+        left: 8%;
+        overflow: scroll;
+            /* background: #fafbfc; */
+        /* border-radius: 15px;
+        padding: 14px 12px;
+        max-height: auto;
+        width: 85%;
+        position: absolute;
+        top: 112%; */
+            /* left: 53%; */
+            /* transform: translate(-50%, -50%);
+            left: 47%;
+            width: 87%;
+            overflow: scroll; */
+        }
+        
+    th {
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 600;
+        padding: 10px 5px;
+        margin-left: -10px;
+        /* text-align: center; */
+        text-align:start;
+        padding-left: 30px;
+    }
+    
+    td {
+        margin: 4px;
+    /* padding: 8px; */
+        text-align:start;
+        padding-left: 15px;
+        /* margin: 4px; */
+        /* padding: 5px; */
+        /* text-align: justify; */
+    }
+    
+        .select-option {
+            width: 100%;
+        }
+    
+        .position-fixed {
+            position: absolute;
+            top: -13%;
+            width:80%;
+        }
+        /* #popup-req-message {
+                width: 100%;
+                left: 0;
+                transform: translateX(0);
+            } */
+            .popup-message {
+                width: 100%;
+                left: 0;
+                transform: none;
+                text-align: center;
+            }
+    }
+    
+    @media only screen and (min-width: 764px) and (max-width: 991px) {
+        .select-option {
+            width: 600px;
+        }
+    
+        .position-fixed {
+            position: absolute;
+        top: 45%;
+        padding-top: 150px;
+        background: white;
+        padding-bottom: 30px;
+        z-index: 99;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0 auto;
+        }
+    
+        .table-section {
+            /* background: #fafbfc; */
+        border-radius: 15px;
+        padding: 14px 12px;
+        max-height: auto;
+        width: 85%;
+        position: absolute;
+        top: 90%;
+        }
+    
+        /* .table-section {
+            background: #fafbfc;
+        border-radius: 4px;
+        padding: 14px 12px;
+        max-height: auto;
+        width: 85%;
+        position: absolute;
+        top: 90%;
+        } */
+        .table-data-row:nth-child(odd) {
+    background: #fafbfc;
+}
+    }
+    
+    @media screen and (max-width: 300px) {
+        .cancelbtn,
+        .deletebtn {
+            width: 100%;
+        }
+    }
+      
+    .form-group3 label {
+  position: relative;
+  cursor: pointer;
+}
+
+.form-group3 label:before {
+  content:'';
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: 2px solid #fbd34e;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0px -15px 10px -12px rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+    cursor: pointer;
+    margin-right: 5px;
+    left: -22px;
+    z-index: 0;
+    top: -1px;
+    border-radius: 5px;
+}
+
+.form-group3 input:checked + label:after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: -2px;
+  left: -14px;
+  width: 6px;
+  height: 14px;
+  border: solid #010101;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  z-index: 0;
+
+}
+        #btn2{
+            display: none;
+        }
+        
+
+        .form-group3 input {
+    position: relative;
+    z-index: 9;
+    opacity: 0;
+}
+#data-container {
+    border: 2px solid #fcfcfc; /* Adds a solid border around the container */
+    padding: 20px;          /* Adds space between the content and the border */
+    margin: 20px auto;      /* Adds space around the container and centers it */
+    width: 97%;        
+         /* Sets the width of the container */
+    max-width: 900px;       /* Ensures the container does not grow too large */
+    background-color: #FAFBFC; /* Light background color for the box */
+    border-radius: 8px;     /* Rounds the corners of the border */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow effect */
+    display: none;
+} 
+.form-group-1 textarea {
+    border: none;
+    background: #FAFBFC;
+    outline: none;
+}
+html, body{
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', sans-serif;
+}
+
+a{
+  text-decoration: none;
+}
+
+/* GRID */
+
+.twelve { width: 100%; }
+.eleven { width: 91.53%; }
+.ten { width: 83.06%; }
+.nine { width: 74.6%; }
+.eight { width: 66.13%; }
+.seven { width: 57.66%; }
+.six { width: 49.2%; }
+.five { width: 40.73%; }
+.four { width: 32.26%; }
+.three { width: 23.8%; }
+.two { width: 15.33%; }
+.one { width: 6.866%; }
+
+/* COLUMNS */
+
+.col {
+	display: block;
+	float:left;
+	margin: 1% 0 1% 1.6%;
+}
+
+.col:first-of-type {
+  margin-left: 0;
+}
+
+.container{
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  position: relative;
+  text-align: center;
+}
+
+/* CLEARFIX */
+
+.cf:before,
+.cf:after {
+    content: " ";
+    display: table;
+}
+
+.cf:after {
+    clear: both;
+}
+
+
+
+.row{
+  margin: 30px 0;
+}
+
+/* .three{
+    background-color: #eee;
+    padding: 50px 0;
+    width: 100%;
+    border-radius: 10px;
+} */
+
+/* ALL LOADERS */
+
+.loader{
+  width: 70px;
+  height: 70px;
+  border-radius: 100%;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* LOADER 1 */
+
+#loader-1:before, #loader-1:after{
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 50%;
+  height: 50%;
+  border-radius: 100%;
+  border: 10px solid transparent;
+  border-top-color: #ffffff;
+}
+
+#loader-1:before{
+  z-index: 100;
+  animation: spin 1s infinite;
+}
+
+#loader-1:after{
+  border: 10px solid #ccc;
+}
+
+@keyframes spin{
+  0%{
+    -webkit-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100%{
+    -webkit-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+#loadercontainer{
+    display: block;
+    text-align: center;
+    /* display: flex; */
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 56%;
+    left: 43%;
+    transform: translate(-50%, -50%);
+    z-index: 99;
+    width: 12%;
+    border-radius: 37px;
+
+}
+/* Responsive */
+@media (max-width: 768px) {
+  #loader-1 {
+    width: 80px; /* Adjust size for smaller screens */
+    height: 80px;
+  }
+  #loader-1:before, #loader-1:after {
+    width: 40%;
+    height: 40%;
+    border-width: 8px;
+    top: -8px;
+    left: -8px;
+  }
+}
+
+@media (max-width: 480px) {
+  #loader-1 {
+    width: 60px; /* Even smaller size on small screens */
+    height: 60px;
+  }
+  #loader-1:before, #loader-1:after {
+    width: 30%;
+    height: 30%;
+    border-width: 6px;
+    top: 263px;
+    left: 228px;
+  }
+}
+#my-textarea {
+      width: 100%; /* Full width of its container */
+      height: 250px; /* Fixed height for large screens */
+      padding: 10px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    /* Adjustments for tablets and small screens */
+    @media (max-width: 768px) {
+      #my-textarea {
+        height: 200px; /* Smaller height on tablets */
+      }
+    }
+
+    /* Adjustments for mobile screens */
+    @media (max-width: 480px) {
+      #my-textarea {
+        height: 150px; /* Even smaller height on mobile */
+        font-size: 14px; /* Smaller font size */
+      }
+    }
+    .mybtn3 {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%; /* Full width of its container */
+      max-width: 437px; /* Max width of the button */
+      padding: 10px 20px; /* Padding around the button */
+      background-color:  #fbd34e; /* Example background color */
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* Make sure the button is centered within the container */
+    .mybtn3 img {
+      max-width: 20px; /* Set image size */
+      height: auto;
+      margin-left: 10px; /* Space between text and image */
+    }
+
+    @media (max-width: 768px) {
+      .mybtn3 {
+        width: 80%; /* 80% width on tablets */
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mybtn3 {
+        width: 90%; /* 90% width on small screens */
+      }
+    }
+            
+        </style>
+     
+</head>
+
+<body>
+    <div id="popup-req-message" class="popup-message" style="background-color: #f44336;">All Fields are required</div>
+    <div id="popup-req-message1" class="popup-message" style="background-color: #f44336;">Invalid Input</div>
+
+    <div id="popup-message" class="popup-message">Copied to clipboard!!</div>
+    <div class="small-container" id="small-container" style="margin: 200px;">
+        <div class="position-fixed">
+        <div class="Custom_box">
+            <div class="Main-logo">
+                <img src="{% static 'images/eagle-2.svg' %}">
+            </div>
+            <div class="Box-Content">
+                <h2 class="">COMP DRIVER INDEXES</h2>
+            </div>
+        </div>
+
+        <div class="d-flex">
+            <div class="form-group">
+                <!-- <input type="text" id="name-input" list="name-suggestions" placeholder="Select Track" value="" required> -->
+                <select name="track" id="trackSelect" required>
+                    <option value="" disabled selected id="selected">Select a track</option>
+                    <!-- Options will be dynamically added here via JavaScript -->
+                </select>
+               
+                <!-- <datalist id="name-suggestions"></datalist> -->
+            </div>
+            <div class="form-group3">
+                    
+                     <input type="checkbox" id="myCheckbox"  onclick="changeText()">
+                     <label>BY LIST</label>
+
+
+                
+
+
+                <!-- <input type="text" id="name-input" list="name-suggestions" placeholder="Select Track" value="" required> -->
+                
+            </div>
+        </div>
+        <div class="select-option" id="selectoptiondiv">
+              
+                
+
+        
+        <form class="d-flex">
+            
+            <div class="form-group">
+                <input type="text" id="name-input" list="name-suggestions" name="pname" placeholder="name" value="" required autocomplete="off">
+                <datalist id="name-suggestions"></datalist>
+            </div>
+            <div class="form-group-1">
+                <input type="text" id="class-input" list="class-suggestions" name="class" placeholder="class" value="" required autocomplete="off">
+                <datalist id="class-suggestions"></datalist>
+            </div>
+            <button class="mybtn1" type="button" id="clearButton"><img src="{% static 'images/chevron-right.svg' %}"></button>
+        </form>
+    </div>
+    <div id="data-container" style="display: none;">
+        <div class="form-group-1">
+            <textarea id="my-textarea"  ></textarea>
+        </div>
+        <button class="mybtn3" type="button" id="clearButton" onclick="getdata()"><img src="{% static 'images/chevron-right.svg' %}"></button>
+
+
+    </div>
+    
+
+    </div>
+  
+        <div class="table-section" id="table-section">
+            <table class="table">
+                <thead class="table-head">
+                    <tr class="table-head-row">
+                        <!-- <th> </th>/ -->
+                        <th>name</th>
+                        <th>class</th>
+                        <th></th>
+                        <th> </th>
+                        <!-- <th><img src="{% static 'images/send-01.sv÷g' %}" onclick="shareDataViaEmail()" style="cursor: progress"></th> -->
+                        <th id="share"><img src="{% static 'images/send-01.svg' %}" id="share" style="cursor:pointer" ></th>
+                    
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="tableBody">
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+        <div class="loadercontainer" id="loadercontainer" style="display: none;">
+            <div class="row cf">
+              <div class="three col">
+                <div class="loader" id="loader-1"></div>
+              </div>
+              
+             
+              
+             
+              
+              </div>
+            </div>
+        
+          
+        
+    </div>
+    <script>
+        function changeText(){
+            const button = document.getElementById('myCheckbox');
+            const dataContainer = document.getElementById('data-container');
+            const selectoptiondiv = document.getElementById('selectoptiondiv');
+            const tablesection = document.getElementById("table-section");  // Get the textarea element
+            tablesection.style.display = 'none'; 
+
+            if (button.checked) {
+                // Checkbox is checked
+            } else {
+                // Checkbox is unchecked
+
+                location.reload();
+            }
+
+
+
+// Add an event listener to the button
+
+        dataContainer.style.display = 'block'; 
+        selectoptiondiv.style.display = 'none'; 
+         // Show the container
+         const elements123 = document.getElementsByClassName("position-fixed");
+
+// Loop through the elements and apply the margin-top with !important
+for (let i = 0; i < elements123.length; i++) {
+  elements123[i].style.setProperty("margin-top", "81px", "important");
+}
+        }
+        function getdata(){
+            const textarea = document.getElementById("my-textarea");  // Get the textarea element
+            const value = textarea.value;  // Retrieve the value of the textarea
+            const loadercontainer = document.getElementById("loadercontainer");  // Get the textarea element
+            loadercontainer.style.display = 'block'; 
+            const data = "Textarea Value: " + value;
+          
+
+            
+            // alert(`${data}`)
+            const lines = data.trim().split('\n');
+
+// Extract the "Class-Driver" from each line
+const classDriverPairs = lines.map(line => {
+  // Match the Class-Driver pattern (e.g., "A/ED Clint Neff")
+  const match = line.match(/([A-Z0-9\/]+)\s+([A-Za-z\s]+),/);
+  if (match) {
+    return `${match[1]} ${match[2]}`; // Return the Class and Driver name
+  }
+  return null; // Return null if no match is found
+}).filter(Boolean); // Filter out null values
+
+// Output the classDriverPairs
+
+// Check if array is empty
+console.log("Check if array is empty",classDriverPairs)
+if (classDriverPairs.length === 0) {
+    const loadercontainer1 = document.getElementById("loadercontainer");  // Get the textarea element
+loadercontainer1.style.display = 'none'; 
+const popup = document.getElementById('popup-req-message1');
+                    popup.style.display = 'block';
+                    setTimeout(() => {
+                        popup.style.display = 'none';
+                        popup.style.backgroundColor = 'red';
+                    },2000);
+                }
+
+function getDriverData(name, className, trackId) {
+    const url = 'http://127.0.0.1:8000/api/driver-list/';
+    const params = {
+        name: name,
+        class: className,
+        track_id: trackId
+    };
+
+    // Send the GET request
+    axios.get(url, { params })
+        .then(response => {
+            loadercontainer.style.display = 'none'; 
+
+            // alert('success')
+            location.reload();
+            dataContainer.style.display = 'none'; 
+
+            console.log("Driver data:", response.data);  
+        })
+        .catch(error => {
+            loadercontainer.style.display = 'none'; 
+
+            // const popup = document.getElementById('popup-req-message1');
+            //         popup.style.display = 'block';
+            //         setTimeout(() => {
+            //             popup.style.display = 'none';
+            //             popup.style.backgroundColor = 'red';
+            //         },2000);
+            console.error("Error fetching data:", error);  // Handle errors
+        });
+}
+classDriverPairs.forEach(driver => {
+    // Split the driver string into Class and Driver parts
+    const [className, ...nameParts] = driver.split(' ');  // Split the string into parts by space; 'className' gets the first part
+    const name = nameParts.join(' ');  // Join the remaining parts to form the full name
+    
+    console.log("Class: " + className);  // Log the Class
+    console.log("Name: " + name);  // Log the Name
+
+    const selectId = JSON.parse(localStorage.getItem("selectedId"));
+
+    // Pass the driver data to the function (trackId could be a fixed value or dynamic)
+    const trackId = selectId;  // Use a constant or dynamic value for the track ID
+    getDriverData(name, className, trackId);  // Ensure you're passing name and className in the correct order
+});}
+    </script>
+    
+    <script>
+        
+        function copyToClipboard(){
+            const tableRows = document.querySelectorAll('.table-data-row');
+            const trackData = document.querySelector('#selected')
+            const selectValue = JSON.parse(localStorage.getItem("selectedValue"))
+            const date = Date().split(" ");
+            const date1 = date[1]+ " "+ date[2]+" "+date[3];
+            // console.log(selectValue)
+            const data = [];
+            let obj ={};
+            const body = encodeURIComponent(Array.from(tableRows).map(row => {
+                const lic = row.querySelector('td:nth-child(1)').textContent;
+                const name = row.querySelector('td:nth-child(2)').textContent;
+                const driverClass = row.querySelector('td:nth-child(3)').textContent;
+                const personalIndex = row.querySelector('td:nth-child(4)').textContent;
+                obj={
+                    lic ,
+                    name,
+                    driverClass,
+                    personalIndex,
+                }
+                data.push(obj)
+                return `Lic# : ${lic}\nName: ${name}\nClass: ${driverClass}\nIndex: ${personalIndex}\n\n`;
+            }).join('\n'));
+            let str= [];
+            let data1 =[]
+            data1.push(selectValue)
+            data1.push(date1)
+            let result = data.map(i =>{
+                str[i]= i.lic + " " +i.name+ " "+ i.driverClass + "  "+ i.personalIndex;
+                data1.push(str[i])
+            })
+            // console.log(data1.join('\n'))
+            
+            navigator.clipboard.writeText(data1.join('\n')).then(()=>{
+                const popup = document.getElementById('popup-message');
+                popup.style.display = 'block';
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 2000);
+            }).catch((err)=>{
+                // console.log(err)
+            })
+        }
+
+        function shareToApps(){
+            const tableRows = document.querySelectorAll('.table-data-row');
+            const trackData = document.querySelector('#selected')
+            const selectValue = JSON.parse(localStorage.getItem("selectedValue"))
+            const date = Date().split(" ");
+            const date1 = date[1]+ " "+ date[2]+" "+date[3];
+            // console.log(selectValue)
+            const data = [];
+            let obj ={};
+            const body = encodeURIComponent(Array.from(tableRows).map(row => {
+                const lic = row.querySelector('td:nth-child(1)').textContent;
+                const name = row.querySelector('td:nth-child(2)').textContent;
+                const driverClass = row.querySelector('td:nth-child(3)').textContent;
+                const personalIndex = row.querySelector('td:nth-child(4)').textContent;
+                obj={
+                    lic ,
+                    name,
+                    driverClass,
+                    personalIndex,
+                }
+                data.push(obj)
+                return `Lic# : ${lic}\nName: ${name}\nClass: ${driverClass}\nIndex: ${personalIndex}\n\n`;
+            }).join('\n'));
+            let str= [];
+            let data1 =[]
+            data1.push(selectValue)
+            data1.push(date1)
+            let result = data.map(i =>{
+                str[i]= i.lic + " " +i.name+ " "+ i.driverClass + "  "+ i.personalIndex;
+                data1.push(str[i])
+            })
+            
+            if(navigator.share){
+                navigator.share({
+                    text: data1.join('\n'),
+                }
+                ).then(()=>{
+                // console.log("success")
+            }).catch((err)=>{
+                // console.log(err)
+            })
+            }         
+        }
+
+        const button = document.getElementById('share');
+        button.addEventListener('click', () => {
+            let screen = window.innerWidth;
+
+            if(screen <= 764){
+                button.onclick= shareToApps();
+            }
+            else{
+                button.onclick = copyToClipboard();
+            } 
+
+        })
+
+        const btn = document.getElementsByClassName('mybtn1')
+        const trackData = document.querySelector('#selected')
+        const pname = document.querySelector('#name-input')
+        const clas = document.querySelector('#class-input')
+
+    //    function showData(){
+    //     console.log(trackData)
+    //    }
+
+
+        function shareDataViaEmail() {
+            const tableRows = document.querySelectorAll('.table-data-row');
+            const subject = encodeURIComponent("New Race Driver's List");
+            const body = encodeURIComponent(Array.from(tableRows).map(row => {
+                const lic = row.querySelector('td:nth-child(1)').textContent;
+                const name = row.querySelector('td:nth-child(2)').textContent;
+                const driverClass = row.querySelector('td:nth-child(4)').textContent;
+                const personalIndex = row.querySelector('td:nth-child(5)').textContent;
+                return `Lic# : ${lic}\nName: ${name}\nClass: ${driverClass}\nIndex: ${personalIndex}\n\n`;
+            }).join('\n'));
+
+            const emailLink = `mailto:?subject=${subject}&body=${body}`;
+            window.location.href = emailLink;
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const nameInput = document.getElementById('name-input');
+            const classInput = document.getElementById('class-input');
+            const nameSuggestions = document.getElementById('name-suggestions');
+            const classSuggestions = document.getElementById('class-suggestions');
+            const tableSection = document.getElementById('table-section');
+            const submitButton = document.querySelector('.mybtn1');
+            const tableBody = document.getElementById('tableBody');
+            
+            
+            function updateTable(data) {
+                data.forEach((value) => {
+                    
+
+                    const deleteBtnImg = "{% static 'images/trash-02.svg' %}"
+                    const piImgBtn = "{% static 'images/Group-904.svg' %}"
+
+                    const trow = document.createElement('tr');
+                    trow.className = 'table-data-row';
+
+                    // const tdata1 = document.createElement('td');
+                    // console.log(tdata1)
+                    const tdata2= document.createElement('td');
+                    const tdata4 = document.createElement('td');
+                    const tdata3 = document.createElement('td');
+                    const tdata5 = document.createElement('td');
+                    const tdata6 = document.createElement('td');
+                    const deleteImg = document.createElement('img');
+                    const piImg = document.createElement('img');
+                    const deleteBtn = document.createElement('button');
+                    tdata6.appendChild(deleteBtn);
+                    // tdata1.innerHTML = value.lic;
+                    tdata2.innerHTML = value.driver;
+                    tdata3.innerHTML = value.classes;
+                    if (value.updated_index!=0.0){
+                        tdata5.innerHTML = value.updated_index +" "+ `(${value.index})`;
+                        console.log("ok3",tdata5)
+                        
+                    }else{
+                        tdata5.innerHTML = value.index;
+                        console.log("ok",value.index)
+
+                }
+                    deleteBtn.className = 'mybtn2';
+                    deleteBtn.onclick = (trow) => {
+                        const csrfToken = "{{ csrf_token }}";
+                        let id = value.id;
+                        fetch(`new-driver-list/${id}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                    })
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100)
+
+                    }
+                    deleteImg.src = deleteBtnImg;
+                    piImg.src = piImgBtn;
+                    if(value.type == 'PI')
+                    tdata4.appendChild(piImg);
+                    deleteBtn.appendChild(deleteImg);
+                    // trow.appendChild(tdata1);
+                    trow.appendChild(tdata2);
+                    trow.appendChild(tdata3);
+                    trow.appendChild(tdata4);
+                    trow.appendChild(tdata5);
+                    trow.appendChild(tdata6);
+                    tableBody.appendChild(trow);
+                })
+            }
+
+            //select operation
+            let selectedValue = "";
+        const selectTeg = document.getElementById('trackSelect');
+       
+              selectTeg.addEventListener('change', (e) => {
+            //   console.log(e.target.value.substring(4))
+              selectedValue = e.target.value;
+              localStorage.setItem("selectedValue", JSON.stringify(selectedValue.substring(3)));
+              localStorage.setItem("selectedId", JSON.stringify(selectedValue.substring(0, selectedValue.indexOf(' '))));
+              e.target.selected = true;
+            //   console.log("tag ==> ", selectedValue.substring(0, selectedValue.indexOf(' '))[1])
+
+            
+           })
+
+            const selectValue = JSON.parse(localStorage.getItem("selectedValue"))
+            const selectId = JSON.parse(localStorage.getItem("selectedId"))
+
+            // console.log(selectId, "sdjkdhksf", selectValue)
+            
+            window.onload = () => {
+                fetch('new-driver-list/')
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.length > 0) {
+                            updateTable(res);
+                            if (res && res.length > 0) {
+                    // console.log('Data is present, disabling selectTeg...');
+                    document.getElementById('trackSelect').disabled = true;
+                    document.getElementById('trackSelect').selected = false;
+                    document.getElementById('selected').innerText = selectValue;
+                    // console.log("gfdhjsgfjhdsgf ===> ", selectTeg.options[selectTeg.selectedIndex])
+                    // selectTeg.options[selectTeg.selectedIndex].innerHTML = selectedValue;
+
+                
+                } else {
+                    // console.log("Field not filled")
+                    localStorage.clear('selectedValue');
+                    localStorage.clear('selectedId');
+
+                    document.getElementById('trackSelect').disabled = false;
+                    
+                }
+                        
+                        } else {
+                            
+                            const tableSection = document.getElementById('table-section');
+                            tableSection.style.display = 'none';
+                            // console.log(selectId)
+                            // console.log(selectValue)
+                            // console.log("Field not filled")
+                            localStorage.clear('selectedValue');
+                            localStorage.clear('selectedId');
+
+                        }
+                    })
+                    .catch(err => {
+                        // console.log('Error fetching data:',err);
+                    });
+                
+
+            
+            }
+
+             
+
+            function fetchAndUpdateTable(e) {
+                // console.log(e)
+                const nameValue = nameInput.value.trim();
+                const classValue = classInput.value.trim();
+                const selectId = JSON.parse(localStorage.getItem("selectedId"))
+
+                // console.log("selectedValue", selectedValue)
+
+
+                if (nameValue && classValue) {
+                    fetch(`api/driver-list/?track_id=${Number(selectId)}&name=${encodeURIComponent(nameValue)}&class=${encodeURIComponent(classValue)}`)
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100)
+                    
+                } else {
+                    // console.log("Please enter both name and class values.");
+                }
+                if(!nameValue || !classValue || !selectId){
+                    // console.log("fields are req")
+                    const popup = document.getElementById('popup-req-message');
+                    popup.style.display = 'block';
+                    setTimeout(() => {
+                        popup.style.display = 'none';
+                        popup.style.backgroundColor = 'red';
+                    },2000);
+
+                    // const div = document.createElement('div')
+                    // const h6 = document.createElement('h6')
+                    // const text = document.createTextNode("All fields are required.")
+                    // h6.appendChild(text)
+                    // div.appendChild(h6)
+
+                    // const smallDiv = document.getElementsByClassName('small-container')
+                    // document.body.insertBefore(div,smallDiv)
+                }
+            }
+
+            submitButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                fetchAndUpdateTable();
+            });
+            nameInput.addEventListener('input', function () {
+                const query = nameInput.value;
+                // console.log(localStorage.getItem('selectedId')) 
+                // const selectValue = JSON.parse(localStorage.getItem("selectedValue"))
+                const selectId = JSON.parse(localStorage.getItem("selectedId"))
+                // console.log(selectValue)
+                fetch(`api/driver-list/?track_id=${Number(selectId)}&name=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        nameSuggestions.innerHTML = '';
+                        classSuggestions.innerHTML = '';
+
+                        data.name_suggestions.forEach(nameSuggestion => {
+                            const suggestion = document.createElement('option');
+                            suggestion.value = nameSuggestion;
+                            nameSuggestions.appendChild(suggestion);
+                        });
+
+                        data.class_suggestions.forEach(classSuggestion => {
+                            const suggestion = document.createElement('option');
+                            suggestion.value = classSuggestion;
+                            classSuggestions.appendChild(suggestion);
+                        });
+                        
+                    });
+            });
+
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+    const selectElement =document.getElementById('trackSelect'); // Get the <select> element
+    const apiUrl = 'tracks/'; // Your API endpoint URL
+
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            // Iterate through each track from the API response
+            data.forEach(track => {
+                const option = document.createElement('option');
+                option.className = "option1"
+
+                if (track.altitude !== null) {
+                    // If altitude is not null, display track name with altitude
+                    option.value = `${track.id} ${track.track_name} ${track.altitude}`;
+                    option.textContent = `${track.track_name} (${track.altitude} ft)`;
+                    // option.id = `${track.id})`;
+                } else {
+                    // If altitude is null, display only track name
+                    option.value = `${track.id} ${track.track_name}`;
+                    option.textContent = track.track_name;
+                    // option.id = `${track.id})`;
+                }
+
+                selectElement.appendChild(option);
+                
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching track data:', error);
+        });
+
+       
+});
+
+
+    </script>
+    <!-- </script> -->
+</body>
+
+</html>

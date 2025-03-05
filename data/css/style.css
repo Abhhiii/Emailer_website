@@ -1,0 +1,239 @@
+
+ body{
+	font-family: Colfax ;
+}
+	
+
+
+*{
+	padding:0;
+    margin:0;
+	box-sizing:border-box;
+}
+
+
+a{
+	text-decoration:none;
+	color:inherit;
+}
+@font-face {
+    font-family: Colfax ;
+    src: url("../fonts/Colfax-Regular.otf");
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: Colfax-Bold;
+    src: url("../fonts/Colfax-Bold.otf");
+    font-weight: bold;
+    font-style: normal;
+}
+@font-face {
+    font-family: Colfax-Light;
+    src: url("../fonts/Colfax-Light.otf");
+    font-weight: normal;
+    font-style: normal;
+}@font-face {
+    font-family: Colfax-Thin;
+    src: url("../fonts/Colfax-Thin.otf");
+    font-weight: normal;
+    font-style: normal;
+}@font-face {
+    font-family: Colfax-Medium;
+    src: url("../fonts/Colfax-Medium.otf");
+    font-weight: normal;
+    font-style: normal;
+}@font-face {
+    font-family: Colfax-SemiBold;
+    src: url("../fonts/Colfax-SemiBold.otf");
+    font-weight: normal;
+    font-style: normal;
+}
+
+.small-container{
+	/* margin:0 auto;
+	background-color:#fff;
+	
+	border-radius:9px;
+	
+	padding:10px 50px 40px; */
+	/* position:absolute;
+	transform:translate(-50%, -50%);
+	top:50%;
+	left:50%; */
+
+}
+.Main-logo{
+	margin-bottom:18px;
+}
+
+.form-group {
+    width: 350px;
+}
+
+.Box-Content{
+	color:white;
+	    margin-top: 7px;
+}
+
+
+.Box-Content h2 {
+       font-size: 30px;
+    font-weight: 900;
+	margin-top: -10px;
+	font-family: 'Colfax-Bold';
+	color:#353030;
+}
+
+.d-flex{
+	display:flex;
+	justify-Content:space-between;
+	align-items:center;
+	    gap: 18px;
+		margin-top:10px;
+}
+
+
+.form-group input {
+    width: 100%;
+  
+    border:0;
+    padding: 14px 12px;
+    font-size: 14px;
+    font-family: Colfax;
+    font-weight: 600;
+    color: #64748B59;
+	outline:none;
+	background:#FAFBFC;
+	border-radius:4px;
+}
+.form-group{
+	width:300px;
+}
+
+.form-group-1 input {
+    width: 100%;
+ font-family: Colfax;
+   
+    border:0;
+     padding: 14px 12px;
+	font-size: 14px;
+    font-family: Colfax;
+    font-weight: 600;
+    color: #64748B59;
+	outline:none;
+	background:#FAFBFC;
+	border-radius:4px;
+}
+
+.mybtn1{
+	background:#FFCF00;
+	width:90px;
+	outline:none;
+	border:0;
+	border-radius:4px;
+	 padding: 10px 8px;
+	 cursor:pointer;
+}
+.mybtn1 i{
+	font-size:20px;
+}
+
+
+.table-section{
+	border:0.7px solid #6F86A83D;
+	border-radius:6px;
+	    margin-top: 60px;
+}
+
+.table-points-heading{
+	display:grid;
+	grid-template-columns:15% 37% 9% 18% 16% 5%;
+	align-items:center;
+	background:#fff;
+	padding:10px 8px 10px 22px;
+	color:#353030;
+	font-size:15px;
+	font-weight:500;
+	 font-family: Colfax-Medium;
+	 border-radius:6px 6px 0 0;
+
+}
+.table-points{
+	display:grid;
+	grid-template-columns:15% 37% 9% 18% 16% 5%;
+	align-items:center;
+	background:#FAFBFC;
+	padding:10px 8px 10px 22px;
+	color:#64748B;
+	font-size:15px;
+	 font-weight: normal;
+	 font-family: Colfax;
+
+}
+.table-points:nth-child(odd){
+	background:#Fff;
+}
+
+@media only screen and (max-width:764px)
+{
+
+.small-container {
+    width: 97%;
+    height: unset;
+    padding: 10px 15px 40px;
+}
+.Box-Content h2 {
+    font-size: 25px;
+}
+
+.d-flex{
+	    gap: 10px;
+		margin-top:12px;
+}
+
+.table-section {
+    margin-top: 35px;
+}
+
+.Main-logo img {
+    width: 32px;
+    margin-bottom: 20px;
+}
+
+.table-points-heading{
+	font-size:12px;
+	padding:10px 8px 5px 10px;
+}
+
+.table-points{
+	font-size:12px;
+	padding:10px 8px 5px 10px;
+}
+
+.form-group {
+    width: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
