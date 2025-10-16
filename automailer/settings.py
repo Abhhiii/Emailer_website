@@ -87,14 +87,18 @@ PDF_TABLE_NAME = "fyc_pdf_data"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mailer',
-        'USER': 'root',
-        'PASSWORD': 'Abhishek@1612',
+        'NAME': 'mailer-db',
+        'USER': 'admin',
+        'PASSWORD': 'Mailer@2025',
         'HOST': '127.0.0.1',
         'PORT': '3306'
     }
-    
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # }
 }
+
 
 
 # Password validation
