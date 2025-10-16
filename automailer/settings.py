@@ -90,8 +90,8 @@ DATABASES = {
         'NAME': 'mailer-db',
         'USER': 'admin',
         'PASSWORD': 'Mailer@2025',
-        'HOST': '127.0.0.1',
-        'PORT': '3306'
+        'HOST': '/var/run/mysqld/mysqld.sock',  # Use socket in WSL
+        'PORT': '',
     }
     # 'default': {
     #     'ENGINE': 'django.db.backends.sqlite3',
