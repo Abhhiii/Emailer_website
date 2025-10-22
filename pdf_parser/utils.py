@@ -106,8 +106,29 @@ def create_log_message(message, properties):
     ]
     send_message_to_slack(message=message)
     # send_log_to_railtown(log_message)
-def remove_numeric(text):
-    return re.sub(r'\d+', '', str(text))
+
+
+def parse_driver_line(text):
+            text = text.strip()
+            pattern1 = r'^(\d+[A-Z]?)\s*([A-Z][a-zA-Z\s]+?)\s*([A-Z]+/[A-Z]+)\s*(\d+\.\d+)$'
+            match = re.match(pattern1, text)
+            if match:
+                lic = match.group(1)
+                driver = match.group(2).strip()
+                class_val = match.group(3)
+                pi = match.group(4)
+                return (lic, driver, class_val, pi)
+            pattern2 = r'^([A-Z]+/[A-Z]+)\s*(\d+\.\d+)$'
+            match = re.match(pattern2, text)
+            if match:
+                class_val = match.group(1)
+                pi = match.group(2)
+                return (None, None, class_val, pi)
+            return None
+
+
+
+
 def fetch_and_process_pdf(pdf_url):
     try:
         response = requests.get(pdf_url)
@@ -132,319 +153,136 @@ def fetch_and_process_pdf(pdf_url):
         pdf_reader = PyPDF2.PdfReader(pdf_path)
 
         num_pages = len(pdf_reader.pages)
-        #page 1
+
+        # Page 1 Processing
         last_lic = None
         last_driver = None
-
         # Define areas for each table on the first page
-        area_first_table = [0, 35, 10000, 180]
-        area_second_table = [30, 190, 10000, 320]
+        area_first_table = [30, 50, 10000, 190]
+        area_second_table = [30, 190, 10000, 325]
         area_third_table = [30, 330, 10000, 460]
         area_fourth_table = [30, 465, 10000, 600]
-        area_fifth_table = [30, 610, 10000, 800]
+        area_fifth_table = [30, 600, 10000, 800]
 
         # Process each table on the first page
-        for area in [area_first_table, area_second_table, area_third_table, area_fourth_table, area_fifth_table]:
+        for area_idx, area in enumerate([area_first_table, area_second_table, area_third_table, area_fourth_table, area_fifth_table], 1):
             try:
-                # Read tables from PDF
                 df_list = tabula.read_pdf(pdf_path, output_format='dataframe', pages=1, multiple_tables=True, area=area)
+                
+                print(f"\n--- Area {area} (Table {area_idx}) ---")
+                if not df_list:
+                    print("No tables detected.")
+                    continue
+                
+                for i, df in enumerate(df_list):
+                    print(f"Table {i+1}: shape={df.shape}, columns={list(df.columns)}")
+                    print(df.head(3))
 
                 if not df_list or len(df_list) == 0:
-                    raise ValueError(f"No tables found on the specified area {area} of page 1.")
+                    print(f"No tables found for area {area}")
+                    continue
 
                 table_df = df_list[0]
 
                 if table_df.empty:
-                    raise ValueError(f"Table is empty for area {area}.")
+                    print(f"Table is empty for area {area}")
+                    continue
 
-                # Adjust column names if needed
-                if area == area_first_table:
-                    table_df = table_df.iloc[1:]  # Skip header row
-                    table_df.columns = ['Competition Eliminator Person']
+                cleaned_data = []
 
-                    cleaned_data = []
-                    current_lic = None
-                    current_driver = None
-
+                # AREA 3 is already well-formatted with separate columns
+                if area_idx == 3:
+                    # This table already has proper columns
+                    if 'Lic#' not in table_df.columns:
+                        table_df.columns = ['Lic#', 'Driver', 'Class', 'PI']
+                    
+                    # Forward fill Lic# and Driver
+                    table_df['Lic#'] = table_df['Lic#'].ffill()
+                    table_df['Driver'] = table_df['Driver'].ffill()
+                    
+                    for _, row in table_df.iterrows():
+                        lic = str(row['Lic#']).strip() if pd.notna(row['Lic#']) else ''
+                        driver = str(row['Driver']).strip() if pd.notna(row['Driver']) else ''
+                        class_value = str(row['Class']).strip() if pd.notna(row['Class']) else ''
+                        pi_value = str(row['PI']).strip() if pd.notna(row['PI']) else ''
+                        
+                        if not lic and last_lic:
+                            lic = last_lic
+                        if not driver and last_driver:
+                            driver = last_driver
+                        
+                        if lic and driver:
+                            last_lic = lic
+                            last_driver = driver
+                            
+                            cleaned_data.append({
+                                'LIC#': lic,
+                                'Driver': driver,
+                                'Class': class_value,
+                                'Personal Index': pi_value
+                            })
+                
+                # For all other areas, combine columns and parse
+                else:
                     for index, row in table_df.iterrows():
-                        row_data = row['Competition Eliminator Person']
-                        if not pd.isna(row_data):
-                            row_data_split = row_data.split('\r')
-
-                            for data in row_data_split:
-                                components = data.strip().split()
-                                if len(components) >= 1:
-                                    lic_candidate = components[0][:3]
-                                    if lic_candidate.isdigit():
-                                        current_lic = lic_candidate
-                                        remaining_data = components[0][3:] + " " + " ".join(components[1:])
-                                    else:
-                                        remaining_data = " ".join(components)
-
-                                    pi_value = remaining_data[-4:].strip()
-
-                                    class_search = re.search(r'([A-Z/]+)\s*\d{1,2}\.\d{2}$', remaining_data)
-                                    if class_search:
-                                        class_value = class_search.group(1)
-                                        driver_value = remaining_data[:class_search.start()].strip()
-                                    else:
-                                        class_value = ""
-                                        driver_value = remaining_data.strip()
-
-                                    if not current_lic or driver_value == "":
-                                        current_lic = last_lic
-                                        driver_value = last_driver
-                                    else:
-                                        last_lic = current_lic
-                                        last_driver = driver_value
-
+                        # Combine all columns into one string
+                        combined_text = ' '.join([str(val) for val in row if pd.notna(val) and str(val) != 'nan'])
+                        if not combined_text or 'Lic#Driver' in combined_text or 'Driver' in combined_text:
+                            continue
+                        
+                        # Split by newlines if present
+                        lines = re.split(r'[\r\n]+', combined_text)
+                        
+                        for line in lines:
+                            line = line.strip()
+                            if not line or line == 'nan':
+                                continue
+                            
+                            # Parse the line
+                            result = parse_driver_line(line)
+                            
+                            if result:
+                                lic, driver, class_val, pi = result
+                                
+                                # If LIC and driver are present, update our tracking
+                                if lic and driver:
+                                    last_lic = lic
+                                    last_driver = driver
+                                # Otherwise use last known values
+                                else:
+                                    lic = last_lic
+                                    driver = last_driver
+                                
+                                if lic and driver:
                                     cleaned_data.append({
-                                        'LIC#': current_lic,
-                                        'Driver': driver_value,
-                                        'Class': class_value,
-                                        'Personal Index': pi_value
+                                        'LIC#': lic,
+                                        'Driver': driver,
+                                        'Class': class_val,
+                                        'Personal Index': pi
                                     })
 
-                    cleaned_df = pd.DataFrame(cleaned_data)
-
-                    if not cleaned_df.empty:
-                        for index, row in cleaned_df.iterrows():
-                            try:
-                                DriverList.objects.get_or_create(
-                                    lic=row['LIC#'][:25],
-                                    driver=row['Driver'],
-                                    classes=row['Class'][:25],
-                                    personal_index=row['Personal Index'],
-                                )
-                            except Exception as e:
-                                print(f"Error occurred while processing first table data: {str(e)}")
-                    else:
-                        raise ValueError("First table data does not have the expected number of columns.")
-
-                # Process other tables similarly
-                elif area == area_second_table:
-                    table_df.columns = ['Lic# Driver', 'Class', 'PI']
-                    table_df = table_df.dropna(subset=['Class', 'PI'])
-
-                    cleaned_data = []
-
-                    for index, row in table_df.iterrows():
-                        lic_driver = row['Lic# Driver']
-                        class_value = row['Class']
-                        pi_value = row['PI']
-
-                        if pd.notna(lic_driver):
-                            lic_driver_split = lic_driver.split(maxsplit=1)
-                            if len(lic_driver_split) >= 2:
-                                current_lic = lic_driver_split[0]
-                                current_driver = lic_driver_split[1]
-                            else:
-                                current_driver = lic_driver
-
-                        if not current_lic or not current_driver:
-                            current_lic = last_lic
-                            current_driver = last_driver
-                        else:
-                            last_lic = current_lic
-                            last_driver = current_driver
-
-                        cleaned_data.append({
-                            'LIC#': current_lic,
-                            'Driver': current_driver,
-                            'Class': class_value,
-                            'Personal Index': pi_value
-                        })
-
-                    cleaned_second_df = pd.DataFrame(cleaned_data)
-                    cleaned_second_df = cleaned_second_df[cleaned_second_df['LIC#'] != 'Lic#']
-
-                    if not cleaned_second_df.empty:
-                        for index, row in cleaned_second_df.iterrows():
-                            try:
-                                DriverList.objects.get_or_create(
-                                    lic=row['LIC#'][:25],
-                                    driver=row['Driver'],
-                                    classes=row['Class'][:25],
-                                    personal_index=row['Personal Index'],
-                                )
-                            except Exception as e:
-                                print(f"Error occurred while processing second table data: {str(e)}")
-                    else:
-                        raise ValueError("Second table data does not have the expected number of columns.")
-
-                elif area == area_third_table:
-                    table_df.columns = ['Lic#', 'Driver', 'Class', 'PI']
-                    table_df['Lic#'] = table_df['Lic#'].ffill()
-                    table_df['Driver'] = table_df['Driver'].ffill()
-
-                    cleaned_data = []
-
-                    for index, row in table_df.iterrows():
-                        lic = row['Lic#']
-                        driver = row['Driver']
-                        class_value = row['Class']
-                        pi_value = row['PI']
-
-                        if not lic or not driver:
-                            lic = last_lic
-                            driver = last_driver
-                        else:
-                            last_lic = lic
-                            last_driver = driver
-
-                        cleaned_data.append({
-                            'LIC#': lic,
-                            'Driver': driver,
-                            'Class': class_value,
-                            'Personal Index': pi_value
-                        })
-
-                    cleaned_third_df = pd.DataFrame(cleaned_data)
-
-                    if not cleaned_third_df.empty:
-                        for index, row in cleaned_third_df.iterrows():
-                            try:
-                                DriverList.objects.get_or_create(
-                                    lic=row['LIC#'][:25],
-                                    driver=row['Driver'],
-                                    classes=row['Class'][:25],
-                                    personal_index=row['Personal Index'],
-                                )
-                            except Exception as e:
-                                print(f"Error occurred while processing third table data: {str(e)}")
-                    else:
-                        raise ValueError("Third table data does not have the expected number of columns.")
-
-                elif area == area_fourth_table:
-                    table_df.columns = ['Lic#', 'Driver', 'Class', 'PI']
-                    table_df['Lic#'] = table_df['Lic#'].ffill()
-                    table_df['Driver'] = table_df['Driver'].ffill()
-
-                    cleaned_data = []
-
-                    for index, row in table_df.iterrows():
-                        lic = row['Lic#']
-                        driver = row['Driver']
-                        class_value = row['Class']
-                        pi_value = row['PI']
-
-                        if not lic or not driver:
-                            lic = last_lic
-                            driver = last_driver
-                        else:
-                            last_lic = lic
-                            last_driver = driver
-
-                        cleaned_data.append({
-                            'LIC#': lic,
-                            'Driver': driver,
-                            'Class': class_value,
-                            'Personal Index': pi_value
-                        })
-
-                    cleaned_fourth_df = pd.DataFrame(cleaned_data)
-
-                    if not cleaned_fourth_df.empty:
-                        for index, row in cleaned_fourth_df.iterrows():
-                            try:
-                                DriverList.objects.get_or_create(
-                                    lic=row['LIC#'][:25],
-                                    driver=row['Driver'],
-                                    classes=row['Class'][:25],
-                                    personal_index=row['Personal Index'],
-                                )
-                            except Exception as e:
-                                print(f"Error occurred while processing fourth table data: {str(e)}")
-                    else:
-                        raise ValueError("Fourth table data does not have the expected number of columns.")
-
-                elif area == area_fifth_table:
-                    page_1_fifth_df_list = tabula.read_pdf(pdf_path, output_format='dataframe', pages=1, multiple_tables=True, area=area_fifth_table)
-
-                    if not page_1_fifth_df_list or len(page_1_fifth_df_list) == 0:
-                        raise ValueError("No tables found on the specified area of page 1.")
-
-                    # Get the fifth table
-                    fifth_table_df = page_1_fifth_df_list[0]
-
-                    # Drop the 'Effective' column if it exists
-                    if 'Effective' in fifth_table_df.columns:
-                        fifth_table_df.drop(columns=['Effective'], inplace=True)
-
-                    # Drop rows where all elements are NaN
-                    fifth_table_df.dropna(how='all', inplace=True)
-
-                    # Reset index after dropping rows
-                    fifth_table_df.reset_index(drop=True, inplace=True)
-
-                    # Assuming the first row contains headers, we'll set those explicitly
-                    fifth_table_df.columns = ['Lic# Driver', 'Class PI']
-
-                    # Forward fill NaN values in 'Lic# Driver'
-                    fifth_table_df['Lic# Driver'] = fifth_table_df['Lic# Driver'].ffill()
-
-                    # Split the 'Lic# Driver' column into 'LIC#' and 'Driver'
-                    fifth_table_df[['LIC#', 'Driver']] = fifth_table_df['Lic# Driver'].str.split(maxsplit=1, expand=True)
-
-                    # Split the 'Class PI' column into 'Class' and 'PI'
-                    fifth_table_df[['Class', 'PI']] = fifth_table_df['Class PI'].str.split(' ', n=1, expand=True)
-
-                    # Drop the original 'Lic# Driver' and 'Class PI' columns
-                    fifth_table_df.drop(columns=['Lic# Driver', 'Class PI'], inplace=True)
-
-                    # Print the cleaned dataframe for debugging
-                    print("Cleaned and processed data:")
-                    print(fifth_table_df)
-
-                    # Extracting data and cleaning it
-                    cleaned_data = []
-
-                    for index, row in fifth_table_df.iterrows():
-                        lic = row['LIC#']
-                        driver = row['Driver']
-                        class_value = row['Class']
-                        pi_value = row['PI']
-
-                        if not lic or not driver:
-                            lic = last_lic
-                            driver = last_driver
-                        else:
-                            last_lic = lic
-                            last_driver = driver
-
-                        cleaned_data.append({
-                            'LIC#': lic,
-                            'Driver': driver,
-                            'Class': class_value,
-                            'Personal Index': pi_value
-                        })
-
-                    cleaned_fifth_df = pd.DataFrame(cleaned_data)
-
-                    if not cleaned_fifth_df.empty:
-                        for index, row in cleaned_fifth_df.iterrows():
-                            try:
-                                DriverList.objects.get_or_create(
-                                    lic=row['LIC#'][:25],
-                                    driver=row['Driver'],
-                                    classes=row['Class'][:25],
-                                    personal_index=row['Personal Index'],
-                                )
-                            except Exception as e:
-                                print(f"Error occurred while processing fifth table data: {str(e)}")
-                    else:
-                        raise ValueError("Fifth table data does not have the expected number of columns.")
-
-        # except Exception as e:
-        #     print(f"Error processing fifth table: {str(e)}")
-        #     create_log_message(message=f"Error processing fifth table: {str(e)}", properties={"Function": "fetch_and_process_pdf"})
-
+                if cleaned_data:
+                    for record in cleaned_data:
+                        try:
+                            DriverList.objects.get_or_create(
+                                lic=record['LIC#'][:25],
+                                driver=record['Driver'][:255],
+                                classes=record['Class'][:25],
+                                personal_index=record['Personal Index'][:25],
+                            )
+                        except Exception as e:
+                            print(f"Error saving record: {record} - {str(e)}")
+                else:
+                    print(f"✗ Area {area_idx}: No data extracted")
 
             except Exception as e:
-                print(f"Error processing table with area {area}: {str(e)}")
-                create_log_message(message=f"Error in fetch_and_process_pdf: {str(e)}", properties={"Function": "fetch_and_process_pdf"})
-
-
+                print(f"Error processing area {area} (Table {area_idx}): {str(e)}")
+                import traceback
+                traceback.print_exc()
+                create_log_message(
+                    message=f"Error processing area {area}: {str(e)}", 
+                    properties={"Function": "fetch_and_process_pdf", "Area": str(area)}
+                )
 
         
 
@@ -456,35 +294,27 @@ def fetch_and_process_pdf(pdf_url):
        # Define the area coordinates [top, left, bottom, right]
 
         area = [0, 35, bottom, 1300]  
-
  
-        df_list = tabula.read_pdf(pdf_path,output_format='dataframe', pages=page_range,area=area,multiple_tables=True,pandas_options={"header": None,"name": None})
-        print(df_list)
+        df_list = tabula.read_pdf(pdf_path,output_format='dataframe', pages=page_range,area=area,multiple_tables=True,pandas_options={"header": None})
         if not df_list:
             create_log_message(message="No tables found in the PDF.", properties={"Function": "fetch_and_process_pdf"})
             return None, None
-        df_list = [df.iloc[4:].reset_index(drop=True) for df in df_list]
+        cleaned_list = []
+        for df in df_list:
+            if df.empty:
+                continue
 
-        first_table = df_list[0]
+            header_idx = df.apply(lambda r: r.astype(str).str.contains("Lic", case=False).any(), axis=1)
+            if header_idx.any():
+                header_row = header_idx[header_idx].index[0]
+                df.columns = df.iloc[header_row].fillna('')
+                df = df.iloc[header_row + 1:]
+            df = df.reset_index(drop=True)
+            cleaned_list.append(df)
 
-        if pd.isnull(first_table.iloc[:, 0]).all():
-            first_table = first_table.iloc[:, 1:]
-
-        first_table = first_table.iloc[1:]
-
-        first_table.columns = [f"Unnamed_{i}" for i in range(len(first_table.columns))]
-
-        first_table['Unnamed_1'] = first_table['Unnamed_1'].apply(remove_numeric)
-
-
-        df_list[0] = first_table
-
-        sheet_read = pd.concat(df_list, ignore_index=True)
+        sheet_read = pd.concat(cleaned_list, ignore_index=True)
 
         sheet_read.columns = [f"Unnamed_{i}" for i in range(len(sheet_read.columns))]
-
-        
-        
 
         csv_directory = 'csv_files'
         csv_path = default_storage.save(os.path.join(csv_directory, csv_file_name), ContentFile(sheet_read.to_csv(index=False)))

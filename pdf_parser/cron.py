@@ -34,11 +34,6 @@ class SendAppendedRowsEmailCronJob(CronJobBase):
             create_log_message(message="Cron job execution failed.", properties={"Function": "send_appended_rows_email_cron_job"})
 
 
-
-# from rest_framework import viewsets
-# from rest_framework.response import Response
-# from pdf_parser.apis.serializers import ClassIndexSerializer
-
     url = settings.CLASS_INDEX_SCRAPING_URL
     response = requests.get(url)
 
