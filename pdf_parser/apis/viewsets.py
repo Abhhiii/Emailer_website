@@ -5,8 +5,8 @@ import docx
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import PyPDF2
-from rest_framework.response import Response
 from pdf_parser.apis.serializers import TrackSerializer
+from openpyxl import load_workbook
 
 
 
@@ -69,61 +69,57 @@ class ProcessAltitudeFactors(APIView):
 
 
 
-class ParseDocxAPIView(APIView):
-    def process_docx(self, docx_file):
+class ParseExcelAPIView(APIView):
+    def process_excel(self, excel_file):
         try:
-            doc = docx.Document(docx_file)
+            wb = load_workbook(excel_file, data_only=True)
+            sheet = wb.active
             tracks_created = 0
 
-            for table in doc.tables:
-                first_row_skipped = False
+            first_row_skipped = False
 
-                for row in table.rows:
-                    if not first_row_skipped:
-                        first_row_skipped = True
-                        continue  
+            for row in sheet.iter_rows(values_only=True):
+                if not first_row_skipped:
+                    first_row_skipped = True
+                    continue  # skip header
 
-                    cells = [cell.text.strip() for cell in row.cells]
-                    if len(cells) >= 9:
-                        division = cells[0]
-                        date = cells[1]
-                        track_name = cells[2]
-                        city = cells[3]
-                        state = cells[4]
-                        altitude = cells[5]
-                        et_1 = cells[6]
-                        mph_1 = cells[7]
-                        et_2 = cells[8]
-                        mph_2 = cells[9] if len(cells) > 9 else None
+                # Convert all cell values to strings (strip spaces)
+                cells = [str(cell).strip() if cell is not None else '' for cell in row]
 
-                        track, created = Track.objects.get_or_create(
-                            # division=division if division else None,
-                            # date=date if date else None,
-                            track_name=track_name if track_name else None,
-                            city=city if city else None,
-                            state=state if state else None,
-                            altitude=altitude if altitude else None,
-                            slet=et_1 if et_1 else None,
-                        )
+                if len(cells) >= 9:
+                    division = cells[0]
+                    date = cells[1]
+                    track_name = cells[2]
+                    city = cells[3]
+                    state = cells[4]
+                    altitude = cells[5]
+                    et_1 = cells[6]
+                    mph_1 = cells[7]
+                    et_2 = cells[8]
+                    mph_2 = cells[9] if len(cells) > 9 else None
 
-                        if created:
-                            tracks_created += 1
-                        
+                    track, created = Track.objects.get_or_create(
+                        track_name=track_name if track_name else None,
+                        city=city if city else None,
+                        state=state if state else None,
+                        altitude=altitude if altitude else None,
+                        slet=et_1 if et_1 else None,
+                    )
 
-            return Response({'message': f'Successfully created {tracks_created} Track objects'}, status=status.HTTP_201_CREATED)
+                    if created:
+                        tracks_created += 1
+
+            return Response(
+                {'message': f'Successfully created {tracks_created} Track objects'},
+                status=status.HTTP_201_CREATED
+            )
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request):
-        docx_file = request.FILES.get('docx_file')
+        excel_file = request.FILES.get('docx_file')  # keep same field name for compatibility
+        if not excel_file:
+            return Response({'error': 'No XLSX file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not docx_file:
-            return Response({'error': 'No DOCX file provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            self.process_docx(docx_file)
-            return Response({'message': 'Altitude factors imported successfully'}, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return self.process_excel(excel_file)
