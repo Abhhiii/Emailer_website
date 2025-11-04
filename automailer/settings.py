@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
 import os
 # from celery.schedules import crontab  
 
+
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -182,3 +185,7 @@ PAGE_INCLUDE = "2"
 
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
+MC_API_KEY = os.getenv("MC_API_KEY")
+MC_SERVER_PREFIX = os.getenv("MC_SERVER_PREFIX")  
+MC_CAMPAIGN_ID = os.getenv("MC_CAMPAIGN_ID") 

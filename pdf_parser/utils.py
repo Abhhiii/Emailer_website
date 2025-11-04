@@ -17,6 +17,9 @@ import pytz
 from driver_list.models import DriverList, UpdatedIndex
 from emailtriggering.models import PreviousTriggeredEmail,ResendEmail
 import re
+import logging
+
+
 
 # def send_log_to_slack(message, properties):
 #     webhook_url = ""
@@ -104,7 +107,7 @@ def create_log_message(message, properties):
             }
         }
     ]
-    send_message_to_slack(message=message)
+    # send_message_to_slack(message=message)
     # send_log_to_railtown(log_message)
 
 
@@ -411,19 +414,19 @@ def send_appended_rows_email(pdf_data_id, changed_rows):
 
 
         for index, row in changed_rows.iterrows():
-            lic_data = row[0]
-            driver_data = row[1]
-            classs_data = row[2]
-            locationEvent_data = row[3]
-            date_data = row[4]
-            mineshaft_data = row[5]
-            personalIndex_data = row[6]
-            classIDX_data = row[7]
-            et_data = row[8]
-            underPersonalIDX_data = row[9]
-            newPersonalIDX_data = row[10]
-            underClassIDX_data = row[11]
-            newClassIDX_data = row[12]
+            lic_data = row[1]
+            driver_data = row[2]
+            classs_data = row[3]
+            locationEvent_data = row[4]
+            date_data = row[5]
+            mineshaft_data = row[6]
+            personalIndex_data = row[7]
+            classIDX_data = row[8]
+            et_data = row[9]
+            underPersonalIDX_data = row[10]
+            newPersonalIDX_data = row[11]
+            underClassIDX_data = row[12]
+            newClassIDX_data = row[13]
 
             lic_data = lic_data if pd.notna(lic_data) else ''
             driver_data = driver_data if pd.notna(driver_data) else ''
@@ -456,7 +459,6 @@ def send_appended_rows_email(pdf_data_id, changed_rows):
             }
 
             alerts.append(alert_data)
-            print(alert_data)
             PreviousTriggeredEmail.objects.create(
                 index = resend_email,
                 lic_data = lic_data,
@@ -491,6 +493,7 @@ def send_appended_rows_email(pdf_data_id, changed_rows):
         }
 
         # send_payload_to_customer_io(api_key=api_key, payload=payload)
+        send_payload_to_mailchimp(api_key=api_key, payload=payload)
         time.sleep(10)
 
         pdf_data = Pdfdata.objects.get(id=pdf_data_id)
@@ -501,3 +504,91 @@ def send_appended_rows_email(pdf_data_id, changed_rows):
     except Exception as e:
         create_log_message(message=f"Error in sending appended rows email: {str(e)}", properties={"Function": "send_appended_rows_email"})
 
+
+
+def send_payload_to_mailchimp(api_key, payload):
+    """
+    Updates an existing Mailchimp campaign (keeps header/footer intact),
+    replaces only <div id="d5">...</div> content with dynamic payload body,
+    then sends the campaign.
+    """
+
+    try:
+        # === Mailchimp configuration ===
+        MAILCHIMP_API_KEY = settings.MC_API_KEY
+        MAILCHIMP_SERVER_PREFIX = settings.MC_SERVER_PREFIX  # e.g. 'us2'
+        MAILCHIMP_CAMPAIGN_ID = settings.MC_CAMPAIGN_ID      # e.g. '9945956'
+
+        base_url = f"https://{MAILCHIMP_SERVER_PREFIX}.api.mailchimp.com/3.0"
+        content_url = f"{base_url}/campaigns/{MAILCHIMP_CAMPAIGN_ID}/content"
+        send_url = f"{base_url}/campaigns/{MAILCHIMP_CAMPAIGN_ID}/actions/send"
+
+        headers = {
+            "Authorization": f"Bearer {MAILCHIMP_API_KEY}",
+            "Content-Type": "application/json",
+        }
+
+        # === 1️⃣ Get existing campaign HTML ===
+        resp = requests.get(content_url, headers=headers, timeout=30)
+        resp.raise_for_status()
+        existing_html = resp.json().get("html", "") or "<html><body></body></html>"
+        # === 2️⃣ Extract alerts list from payload ===
+        alerts = payload.get("data", {}).get("items", [])
+        if not alerts:
+            logging.warning("No alerts found in payload; skipping Mailchimp send.")
+            return False
+
+        # === 3️⃣ Build formatted body HTML ===
+        body_blocks = []
+        for a in alerts:
+            lic = a.get("lic", "")
+            name = a.get("driver", "")
+            new_pi = a.get("newPersonalIDX", "")
+            old_pi = a.get("personalIndex", "")
+            class_name = a.get("class", "")
+            location = a.get("locationEvent", "")
+            date = a.get("date", "")
+            et = a.get("et", "")
+            amt = a.get("underPersonalIDX", "")
+
+            block = f"""
+            <p class="mcePastedContent" style="margin:0; margin-bottom:16px;">
+                {lic}<br>
+                {name} {new_pi} <span style="background-color:#fff;">(was {old_pi})</span> {class_name}
+            </p>
+            <p class="mcePastedContent" style="margin:0; margin-bottom:16px;">{location}{date}</p>
+            <p class="mcePastedContent last-child" style="margin:0; margin-bottom:16px;">{et}({amt})</p>
+            """
+            body_blocks.append(block.strip())
+
+        # Join multiple blocks with extra spacing
+        body_html = "<br><br>".join(body_blocks)
+
+        # === 4️⃣ Replace only the <div id="d5">...</div> ===
+        pattern = r'(<div[^>]+id=["\']d5["\'][^>]*>)(.*?)(</div>)'
+        new_html, count = re.subn(
+            pattern,
+            rf"\1{body_html}\3",
+            existing_html,
+            flags=re.DOTALL | re.IGNORECASE
+        )
+
+        if count == 0:
+            logging.warning("Could not find <div id='d5'> block; skipping replacement.")
+            return False
+
+        # === 5️⃣ Update campaign content ===
+        r2 = requests.put(content_url, json={"html": new_html}, headers=headers, timeout=30)
+        r2.raise_for_status()
+        logging.info(f"[Mailchimp] Updated campaign content (status {r2.status_code})")
+
+        # === 6️⃣ Send campaign ===
+        r3 = requests.post(send_url, headers=headers, timeout=30)
+        r3.raise_for_status()
+        logging.info(f"[Mailchimp] Campaign sent successfully (status {r3.status_code})")
+
+        return True
+
+    except Exception as e:
+        logging.exception(f"Error sending to Mailchimp: {str(e)}")
+        return False
