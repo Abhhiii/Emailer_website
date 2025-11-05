@@ -504,46 +504,50 @@ def send_appended_rows_email(pdf_data_id, changed_rows):
     except Exception as e:
         create_log_message(message=f"Error in sending appended rows email: {str(e)}", properties={"Function": "send_appended_rows_email"})
 
-
-
 def send_payload_to_mailchimp(api_key, payload):
     """
-    Updates an existing Mailchimp campaign (keeps header/footer intact),
-    replaces only <div id="d5">...</div> content with dynamic payload body,
-    then sends the campaign.
+    Replicates a Mailchimp campaign from a master template, updates its content
+    with dynamic payload data, and sends it. Keeps header/footer intact.
     """
 
     try:
-        # === Mailchimp configuration ===
-        MAILCHIMP_API_KEY = settings.MC_API_KEY
-        MAILCHIMP_SERVER_PREFIX = settings.MC_SERVER_PREFIX  # e.g. 'us2'
-        MAILCHIMP_CAMPAIGN_ID = settings.MC_CAMPAIGN_ID      # e.g. '9945956'
+        logging.info("🔁 Starting Mailchimp auto-replicate + send process...")
 
+        # === 1️⃣ Configuration ===
+        MAILCHIMP_API_KEY = settings.MC_API_KEY
+        MAILCHIMP_SERVER_PREFIX = settings.MC_SERVER_PREFIX  # e.g., 'us2'
+        MASTER_CAMPAIGN_ID = settings.MC_CAMPAIGN_ID         # your base campaign ID (template)
         base_url = f"https://{MAILCHIMP_SERVER_PREFIX}.api.mailchimp.com/3.0"
-        content_url = f"{base_url}/campaigns/{MAILCHIMP_CAMPAIGN_ID}/content"
-        send_url = f"{base_url}/campaigns/{MAILCHIMP_CAMPAIGN_ID}/actions/send"
 
         headers = {
-            "Authorization": f"Bearer {MAILCHIMP_API_KEY}",
+            "Authorization": f"apikey {MAILCHIMP_API_KEY}",
             "Content-Type": "application/json",
         }
 
-        # === 1️⃣ Get existing campaign HTML ===
-        resp = requests.get(content_url, headers=headers, timeout=30)
-        resp.raise_for_status()
-        existing_html = resp.json().get("html", "") or "<html><body></body></html>"
-        # === 2️⃣ Extract alerts list from payload ===
+        # === 2️⃣ Replicate the master campaign ===
+        replicate_url = f"{base_url}/campaigns/{MASTER_CAMPAIGN_ID}/actions/replicate"
+        logging.info(f"Replicating master campaign {MASTER_CAMPAIGN_ID}...")
+        r1 = requests.post(replicate_url, headers=headers, timeout=30)
+        r1.raise_for_status()
+        new_campaign_id = r1.json().get("id")
+
+        # Optionally rename it (for Mailchimp dashboard clarity)
+        patch_url = f"{base_url}/campaigns/{new_campaign_id}"
+        new_title = f"Auto Mailer {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        requests.patch(patch_url, headers=headers,
+                       data=json.dumps({"settings": {"title": new_title}}))
+
+        # === 3️⃣ Build the dynamic body HTML ===
         alerts = payload.get("data", {}).get("items", [])
         if not alerts:
-            logging.warning("No alerts found in payload; skipping Mailchimp send.")
+            logging.warning("⚠️ No alerts found in payload; skipping Mailchimp send.")
             return False
 
-        # === 3️⃣ Build formatted body HTML ===
         body_blocks = []
         for a in alerts:
             lic = a.get("lic", "")
             name = a.get("driver", "")
-            new_pi = a.get("newPersonalIDX", "")
+            new_pi = a.get("newPersonalIDX", a.get("personalIndex", ""))
             old_pi = a.get("personalIndex", "")
             class_name = a.get("class", "")
             location = a.get("locationEvent", "")
@@ -554,17 +558,22 @@ def send_payload_to_mailchimp(api_key, payload):
             block = f"""
             <p class="mcePastedContent" style="margin:0; margin-bottom:16px;">
                 {lic}<br>
-                {name} {new_pi} <span style="background-color:#fff;">(was {old_pi})</span> {class_name}
+                {name} {new_pi} <span style="color:#666;">(was {old_pi})</span> {class_name}
             </p>
             <p class="mcePastedContent" style="margin:0; margin-bottom:16px;">{location}{date}</p>
-            <p class="mcePastedContent last-child" style="margin:0; margin-bottom:16px;">{et}({amt})</p>
+            <p class="mcePastedContent last-child" style="margin:0; margin-bottom:16px;">ET ({amt})</p>
             """
             body_blocks.append(block.strip())
 
-        # Join multiple blocks with extra spacing
         body_html = "<br><br>".join(body_blocks)
 
-        # === 4️⃣ Replace only the <div id="d5">...</div> ===
+        # === 4️⃣ Get existing campaign content (to preserve header/footer) ===
+        get_url = f"{base_url}/campaigns/{new_campaign_id}/content"
+        resp = requests.get(get_url, headers=headers, timeout=30)
+        resp.raise_for_status()
+        existing_html = resp.json().get("html", "<html><body></body></html>")
+                
+        # === 5️⃣ Replace body section only ===
         pattern = r'(<div[^>]+id=["\']d5["\'][^>]*>)(.*?)(</div>)'
         new_html, count = re.subn(
             pattern,
@@ -574,21 +583,30 @@ def send_payload_to_mailchimp(api_key, payload):
         )
 
         if count == 0:
-            logging.warning("Could not find <div id='d5'> block; skipping replacement.")
+            logging.warning("⚠️ Could not find <div id='d5'> block in template; skipping update.")
             return False
 
-        # === 5️⃣ Update campaign content ===
-        r2 = requests.put(content_url, json={"html": new_html}, headers=headers, timeout=30)
-        r2.raise_for_status()
-        logging.info(f"[Mailchimp] Updated campaign content (status {r2.status_code})")
+        if not new_html or "<html" not in new_html.lower():
+            logging.error("❌ Generated HTML invalid or empty, skipping send.")
+            return False
 
-        # === 6️⃣ Send campaign ===
+
+        # === 6️⃣ PUT updated HTML content ===
+        put_url = f"{base_url}/campaigns/{new_campaign_id}/content"
+        r2 = requests.put(put_url, headers=headers, data=json.dumps({"html": new_html}), timeout=30)
+        logging.info(f"[Mailchimp] PUT content status: {r2.status_code}")
+        r2.raise_for_status()
+
+        # === 7️⃣ Send the replicated campaign ===
+        send_url = f"{base_url}/campaigns/{new_campaign_id}/actions/send"
         r3 = requests.post(send_url, headers=headers, timeout=30)
+        logging.info(f"[Mailchimp] Send status: {r3.status_code}")
         r3.raise_for_status()
-        logging.info(f"[Mailchimp] Campaign sent successfully (status {r3.status_code})")
+
+        logging.info(f"✅ Mailchimp campaign {new_campaign_id} sent successfully!")
 
         return True
 
     except Exception as e:
-        logging.exception(f"Error sending to Mailchimp: {str(e)}")
+        logging.exception(f"❌ Error in Mailchimp send: {str(e)}")
         return False
