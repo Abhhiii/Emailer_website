@@ -216,7 +216,7 @@ class DriverListAPIView(APIView):
 
             formatted_updated_index = math.floor(updated_index*100)/100
 
-            return formatted_updated_index
+            return f"{formatted_updated_index:.2f}"
 
 
 class NewRaceDriversListView(generics.ListAPIView):
