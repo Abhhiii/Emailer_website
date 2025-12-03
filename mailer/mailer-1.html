@@ -876,7 +876,7 @@
             // Output the classDriverPairs
 
             // Check if array is empty
-            console.log("Check if array is empty", classDriverPairs)
+            // console.log("Check if array is empty", classDriverPairs)
             if (classDriverPairs.length === 0) {
                 const loadercontainer1 = document.getElementById("loadercontainer"); // Get the textarea element
                 loadercontainer1.style.display = 'none';
@@ -907,7 +907,7 @@
                         location.reload();
                         dataContainer.style.display = 'none';
 
-                        console.log("Driver data:", response.data);
+                        // console.log("Driver data:", response.data);
                     })
                     .catch(error => {
                         loadercontainer.style.display = 'none';
@@ -926,8 +926,8 @@
                 const [className, ...nameParts] = driver.split(' '); // Split the string into parts by space; 'className' gets the first part
                 const name = nameParts.join(' '); // Join the remaining parts to form the full name
 
-                console.log("Class: " + className); // Log the Class
-                console.log("Name: " + name); // Log the Name
+                // console.log("Class: " + className); // Log the Class
+                // console.log("Name: " + name); // Log the Name
 
                 const selectId = JSON.parse(localStorage.getItem("selectedId"));
 
@@ -1100,11 +1100,11 @@
                     tdata3.innerHTML = value.classes;
                     if (value.updated_index != 0.0) {
                         tdata5.innerHTML = value.updated_index + " " + `(${value.index})`;
-                        console.log("ok3", tdata5)
+                        // console.log("ok3", tdata5)
 
                     } else {
                         tdata5.innerHTML = value.index;
-                        console.log("ok", value.index)
+                        // console.log("ok", value.index)
 
                     }
                     deleteBtn.className = 'mybtn2';
@@ -1191,16 +1191,16 @@
                 const id = opt ? String(opt.value).trim() : String(e.target.value || '').trim();
                 const display = opt ? (opt.textContent || '').trim() : '';
 
-                console.log('=== TRACK SELECT CHANGED ===');
-                console.log('Option.value (id):', id);
-                console.log('Option.text (display):', display);
+                // console.log('=== TRACK SELECT CHANGED ===');
+                // console.log('Option.value (id):', id);
+                // console.log('Option.text (display):', display);
 
                 // store both explicitly and correctly
                 localStorage.setItem('selectedId', JSON.stringify(String(id)));
                 localStorage.setItem('selectedValue', JSON.stringify(String(display)));
 
-                console.log('Saved selectedId:', localStorage.getItem('selectedId'));
-                console.log('Saved selectedValue:', localStorage.getItem('selectedValue'));
+                // console.log('Saved selectedId:', localStorage.getItem('selectedId'));
+                // console.log('Saved selectedValue:', localStorage.getItem('selectedValue'));
 
                 // update UI label or option text
                 const selectedLabel = document.getElementById('selected') || document.getElementById('selectedLabel');
@@ -1209,9 +1209,9 @@
                 // ensure option remains selected
                 if (opt) opt.selected = true;
 
-                console.log('Final selectedIndex:', e.target.selectedIndex);
-                console.log('Final selected option text:', opt ? opt.textContent : '(no option)');
-                console.log('==================================');
+                // console.log('Final selectedIndex:', e.target.selectedIndex);
+                // console.log('Final selected option text:', opt ? opt.textContent : '(no option)');
+                // console.log('==================================');
             });
 
 
